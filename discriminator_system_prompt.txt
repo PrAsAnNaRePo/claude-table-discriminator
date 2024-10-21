@@ -28,9 +28,11 @@ Your role is to validate the extracted table with the actual table in the image.
      - Find difference between the both analysis of those tables.
      - Find what is the generated table missing and what to be added.
      - Use <mistake> tags to write the mistakes found, if any.
-     - for example: <mistake>The column B is missing.<mistake>, <mistake>The value 2345.90 is wrongly entered as 2345.00.<mistake>
+     - for example: <mistake>The column B is missing.<mistake> 
      - **Step 2.1: Scoring**
        - you have to give a exact score to the generated html depends upon the mistakes, alignment issue, mis-entered values, vaue missing.
+        - Use <score> tage to represent score in the scale of 1 - 10 (including floating point numbers).
+        - Make sure you are giving a valid score.
 
 3. **Important Guidelines:**
 
