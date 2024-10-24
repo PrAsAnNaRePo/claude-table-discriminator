@@ -78,6 +78,8 @@ def main():
                     temperature=0.1,
                 )
 
+                st.write(response.usage)
+
                 # st.write(response.content[0].text)
                 st.title("here are the steps i took")
                 for i in extract_steps(response.content[0].text):
