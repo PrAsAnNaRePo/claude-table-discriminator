@@ -6,6 +6,7 @@ from PIL import Image
 import base64
 from dotenv import load_dotenv
 import streamlit as st
+import numpy as np
 
 load_dotenv()
 
@@ -25,6 +26,10 @@ def extract_content(content):
     score = re.findall(r'<score>(.*?)</score>', content, re.DOTALL)
 
     return mistakes, score[0]
+
+def extract_breakdown(content):
+    breakdown = re.findall(r'<breakdown>(.*?)</breakdown>', content, re.DOTALL)
+    return breakdown
 
 def upscale_image(base64_img, upscale_factor=1.5):
     # Decode the base64 image
@@ -58,14 +63,33 @@ def main():
         response = response.strip()
         # print(type(response))
         # tables = extract_code(response)
-        img = upscale_image(img, upscale_factor=1.5)
-        st.image(base64.b64decode(img), caption='Uploaded Image', use_column_width=True)
+        
+        _img = base64.b64decode(img)
+        img_array = np.array(Image.open(BytesIO(_img)))
+        st.write(img_array.shape)
+        height, width, _ = img_array.shape
+        upscale_factor = 1.0
+
+        while height < 2500 and width < 2800:
+            upscale_factor += 0.5
+            new_width = int(width * upscale_factor)
+            new_height = int(height * upscale_factor)
+            
+            # Update height and width for the next iteration
+            height, width = new_height, new_width
+
+        st.write(upscale_factor)
+        img = upscale_image(img, upscale_factor=upscale_factor)
+
+        normal_img = base64.b64decode(img)
+        # print the size of the image
+        # Print the shape of the image
+        img_array = np.array(Image.open(BytesIO(normal_img)))
+        st.write(f"Image shape: {img_array.shape}")
+
+        st.image(normal_img, caption='Uploaded Image', use_column_width=True)
         
         st.html(response)
-
-        # st.write(len(tables))
-        # if len(tables) > 0:
-        #     st.html('<table' + tables[0])
         
         msg = [
                 {
@@ -92,7 +116,7 @@ def main():
                 model="claude-3-5-sonnet-latest",
                 messages=msg,
                 max_tokens=8192,
-                system=open('discriminator_system_prompt.txt', 'r').read(),
+                system=open('discriminator_system_prompt copy.txt', 'r').read(),
                 extra_headers={
                     'anthropic-beta': 'max-tokens-3-5-sonnet-2024-07-15'
                 },
@@ -102,16 +126,17 @@ def main():
             st.write(response.usage)
 
             # st.write(response.content[0].text)
-            st.title("here are the steps i took")
+            st.title("steps:")
             for i in extract_steps(response.content[0].text):
                 st.write(i)
 
-            st.title("mistakes i found")
+            st.title("mistakes:")
             mistakes, score = extract_content(response.content[0].text)
-            st.write(mistakes)
+            st.write(mistakes[0])
+            breakdown = extract_breakdown(response.content[0].text)
+            st.title("mistake breakdown:")
+            st.write(breakdown[0])
             st.title(f"score: {score}")
-        # else:
-        #     st.write("please try another")
-
+        
 if __name__ == "__main__":
     main()
